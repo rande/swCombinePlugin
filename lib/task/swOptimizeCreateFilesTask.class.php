@@ -203,6 +203,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
 
     if(count($combine->getFiles()) == 0)
     {
+      $this->logSection('combine', '   ~ no files to add');
       return;
     }
     
@@ -222,7 +223,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
     // save combined file
     if(!$this->saveContents($path, $content))
     {
-      
+      $this->logSection('combine', '   ~ content is empty');
       return;
     }
     
