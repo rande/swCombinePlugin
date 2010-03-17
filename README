@@ -1,0 +1,104 @@
+# swCombinePlugin
+
+This plugin combines javascript and stylesheet files into optimized files.
+
+## How it works ?
+
+The plugin read all view.yml files and generates the correct combined files :
+ - stylesheets
+ - javascript
+ 
+The plugin can also generate packages from a list of files. This feature allows you to create a common set of files for your website, and include specific assets for a view.
+
+## Benefits
+
+ - Combine files and optimizations are when you deploy the application
+ - The view cache file generates the correct path to the combined files, so there is not computation at runtime.
+
+## Available optimizers
+
+
+## Install
+
+ * edit ProjectConfiguration.class.php by adding the requirement and enable the plugin
+ 
+        [php] 
+        require_once(dirname(__FILE__).'/../plugins/swCombinePlugin/lib/config/swCombineViewConfigHandler.class.php');
+        
+        class ProjectConfiguration extends ysfProjectConfiguration
+        {
+          public function setup()
+          {
+
+             $this->enablePlugins(array(
+                // your plugins
+                'swCombinePlugin'
+             ));
+           }
+        }
+ 
+ * add a config_handlers.yml inside APP/config
+ 
+        [yaml]
+        modules/*/config/view.yml:
+          class:    swCombineViewConfigHandler
+          param:
+           enabled: true
+           private_path: %SF_WEB_DIR%/sw-combine
+           public_path:  /sw-combine
+           configuration:
+             javascript:
+               enabled:  true
+               combine:  swCombineJavascript
+               driver:   swDriverJSMinPlus
+               filename: %s.js                         # %s will by replace by the combined name
+               exclude:
+                 - /js/jQuery/jquery.1.2.6.js
+                 - /js/jQuery/ui-1.5.3/jquery.ui.all.js
+                 - /js/jQuery/offset.js
+                 - /js/jQuery/jquery.form-defaults.js
+                 - /js/jQuery/jquery.timers-1.2.js
+                 - /js/jqModal/jqModal.js
+                 - /js/scrollTo/jquery.scrollTo-min.js
+                 - /js/main.js
+               packages:
+                 common:
+                   auto_include: true
+                   files:
+                     - /js/jQuery/jquery.1.2.6.js
+                     - /js/jQuery/ui-1.5.3/jquery.ui.all.js
+                     - /js/jQuery/offset.js
+                     - /js/jQuery/jquery.form-defaults.js
+                     - /js/jQuery/jquery.timers-1.2.js
+                     - /js/jqModal/jqModal.js
+                     - /js/scrollTo/jquery.scrollTo-min.js
+                     - /js/main.js
+
+
+             stylesheet:
+               enabled:  true
+               combine:  swCombineStylesheet
+               driver:   swDriverCssmin
+               filename: %s.css                        # %s will by replace by the combined name
+               exclude:
+                 - /css/main.css
+                 - /css/draft/ui-theme.css
+                 - /css/mg-theme.css
+                 - /css/print.css
+               packages:
+                 common:
+                   auto_include: true
+                   files:
+                     - /css/main.css
+                     - /css/draft/ui-theme.css
+                     - /css/mg-theme.css
+
+  
+  * clear your cache
+
+        ./symfony cc
+  
+  * combine css and js with 
+    
+        ./symfony sw:combine frontend
+        ./symfony sw:combine backend
