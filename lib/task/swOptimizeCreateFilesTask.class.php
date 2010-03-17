@@ -282,7 +282,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
       throw new sfException(sprintf('The folder %s is not writable', $path));
     }
     
-    if(!$content)
+    if(!$contents)
     {
       
       return false;
