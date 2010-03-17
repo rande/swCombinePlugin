@@ -150,7 +150,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
           $assets = $this->view_handler->exposeAddAssets('stylesheet', $stylesheets, false);
           $this->combineAndOptimize('stylesheet', $assets);
         }
-        
+                
         // Generate js module files
         $javascripts = $this->view_handler->exposeMergeConfigValue('javascripts', $view);
         if(count($javascripts) > 0)
@@ -158,7 +158,6 @@ class swOptimizeCreateFilesTask extends sfBaseTask
           $assets = $this->view_handler->exposeAddAssets('javascript', $javascripts, false);
           $this->combineAndOptimize('javascript', $assets);
         }
-
       }
     }
   }
@@ -203,7 +202,8 @@ class swOptimizeCreateFilesTask extends sfBaseTask
 
     if(count($combine->getFiles()) == 0)
     {
-      $this->logSection('combine', '   ~ no files to add');
+      $this->logSection('combine', '   ~ no files to add : '.$type);
+
       return;
     }
     
@@ -212,27 +212,29 @@ class swOptimizeCreateFilesTask extends sfBaseTask
       $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combined)
     );
     
+    
     if(is_file($path))
     {
       $this->logSection('combine', 'duplicate file, nothing to do');
       return;
     }
-    
+
     $content = $combine->getContentsFromFiles();
     
     // save combined file
     if(!$this->saveContents($path, $content))
     {
-      $this->logSection('combine', '   ~ content is empty');
+      $this->logSection('combine', '   ~ content is empty : '.$type);
       return;
     }
-    
+
     // optimize file with the provided driver
     $driver = $this->getDriver($type);
     
     $driver->processFile($path, true);
     $results = $driver->getResults();
     
+
     $this->logSection('file+', sprintf(' > %s', $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combined)));
     
     $this->logSection('optimize', sprintf(' > from %.2fKB to %.2fKB, ratio -%s%%', 
@@ -248,12 +250,14 @@ class swOptimizeCreateFilesTask extends sfBaseTask
    * @param string $type name associated to the driver : javascript or stylesheet
    * @param swDriveBase 
    */
-  public function getDriver(string $type)
+  public function getDriver($type)
   {
+    
     $driver = $this->view_parameters->get('configuration['.$type.'][driver]', false);
     
     if(!class_exists($driver))
     {
+      
       throw new sfException('Invalid driver class : '.$driver);
     }
     
