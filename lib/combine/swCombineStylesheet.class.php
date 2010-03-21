@@ -36,18 +36,23 @@ class swCombineStylesheet extends swCombineBase
       throw new Exception('unable to read the asset : '.$asset);
     }
     
+    // remove BOM
     $contents = $this->removeBom($contents);
     
+    // import css from external declarations
     $contents = $this->fixImportStatement($path, $include);
     
-    // get the version, otherwise set to the current time
-    // so each time the cache is cleared then the image are reload from the webserver
-    $version = sfConfig::get('app_swCombine_asset_version', strtotime('now'));
-    
-    $pattern = '/url\(("|\'|)(.*)("|\'|)\)/smU';
-    $replacement = "url(\${2}?${version})";
-    
-    $contents = preg_replace($pattern, $replacement, $contents, -1);
+    // get the version so each time the cache is cleared then the image are reload 
+    // from the webserver
+    $params  = sfConfig::get('app_swToolbox_swCombine', array('version' => false));
+    $version = $params['version'];
+    if($version)
+    {
+      $pattern = '/url\(("|\'|)(.*)("|\'|)\)/smU';
+      $replacement = "url(\${2}?_sw=${version})";
+
+      $contents = preg_replace($pattern, $replacement, $contents, -1);
+    }
     
     // remove the '@CHARSET UTF-8'
     $charset_pattern = '/@charset ([^;]*);/i';
