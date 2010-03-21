@@ -36,19 +36,29 @@ The plugin can also generate packages from a list of files. This feature allows 
              ));
            }
         }
+
+ * edit your app.yml file and add an optional version value
  
+        [yaml]
+        swToolbox:
+          swCombine:
+            # the version number can be used to force load of new files from the media server
+            #   you can configure a never ending expired time on your media server
+            #   if the version is never updated, media will be never reloaded ...
+            version: 3
+  
  * add a config_handlers.yml inside APP/config
  
         [yaml]
         modules/*/config/view.yml:
-          class:    swCombineViewConfigHandler
+          # put sfViewConfigHandler to restore the default symfony config handler
+          # class: sfViewConfigHandler
+          class: swCombineViewConfigHandler 
           param:
-           enabled: true
            private_path: %SF_WEB_DIR%/sw-combine
            public_path:  /sw-combine
            configuration:
              javascript:
-               enabled:  true
                combine:  swCombineJavascript
                driver:   swDriverJSMinPlus
                filename: %s.js                         # %s will by replace by the combined name
@@ -76,7 +86,6 @@ The plugin can also generate packages from a list of files. This feature allows 
 
 
              stylesheet:
-               enabled:  true
                combine:  swCombineStylesheet
                driver:   swDriverCssmin
                filename: %s.css                        # %s will by replace by the combined name

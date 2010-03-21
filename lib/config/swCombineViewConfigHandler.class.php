@@ -26,10 +26,11 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
    */
   protected function addHtmlAsset($viewName = '')
   {
+    
     // Merge the current view's stylesheets with the app's default stylesheets
     $stylesheets = $this->mergeConfigValue('stylesheets', $viewName);
     $stylesheets = $this->combineValues('stylesheet', $stylesheets, $viewName);
-      
+    
     $css = $this->addAssets('Stylesheet', $stylesheets);
   
     // Merge the current view's javascripts with the app's default javascripts
@@ -144,7 +145,6 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     
   public function getCombinedName($type, array $assets)
   {
-    // TODO : add the media revision number in the hash
     $format = $this->getParameterHolder()->get('configuration['.$type.'][filename]', '%s');
 
     // make sure we have a flat list
@@ -160,16 +160,18 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     $assets = array_unique($assets);
     sort($assets);
     
-    return sprintf($format, md5(serialize($assets)));
+    // compute the name
+    $name =  md5(serialize($assets));
+    
+    return sprintf($format, $name);
   }
   
   public function getPackageName($type, $name)
   {
-    // TODO : add the media revision number in the hash
-    $format = $this->getParameterHolder()->get('configuration['.$type.'][filename]', '%s');
-     
-     // var_dump(sprintf($format, md5(sfInflector::underscore('package_'.$type.'_'.$name)))); die();
-    return sprintf($format, md5(sfInflector::underscore('package_'.$type.'_'.$name)));
+    $format  = $this->getParameterHolder()->get('configuration['.$type.'][filename]', '%s');
+    $name    = md5(sfInflector::underscore('package_'.$type.'_'.$name));
+    
+    return sprintf($format, $name);
   }
   
   /**

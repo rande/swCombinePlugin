@@ -23,10 +23,8 @@ class swCombineJavascript extends swCombineBase
     $this->path_pos = -1;
     $this->paths    = array();
     
-    // echo `cat $asset`;
     $contents = @file_get_contents($asset);
     
-
     if(!$contents)
     {
       throw new Exception('unable to read the asset : '.$asset);

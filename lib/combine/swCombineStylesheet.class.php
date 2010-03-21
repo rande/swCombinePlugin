@@ -42,7 +42,7 @@ class swCombineStylesheet extends swCombineBase
     
     // get the version, otherwise set to the current time
     // so each time the cache is cleared then the image are reload from the webserver
-    $version = sfConfig::get('app_sfCombinePlugin_asset_version', strtotime('now'));
+    $version = sfConfig::get('app_swCombine_asset_version', strtotime('now'));
     
     $pattern = '/url\(("|\'|)(.*)("|\'|)\)/smU';
     $replacement = "url(\${2}?${version})";
