@@ -8,7 +8,7 @@
  *
  * @see http://minify.googlecode.com/svn/trunk/min/lib/Minify/CSS/Compressor.php
  */
-class npDriverMinifyCssCompressor extends npDriverBase
+class swDriverMinifyCssCompressor extends swDriverBase
 {
   public function doProcessFile($file, $replace = false)
   {

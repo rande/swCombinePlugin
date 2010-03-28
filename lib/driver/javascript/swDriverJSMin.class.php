@@ -6,7 +6,7 @@
  * @subpackage  driver
  * @author      Nicolas Perriault <nperriault@gmail.com>
  */
-class swDriverJSMin extends npDriverBase
+class swDriverJSMin extends swDriverBase
 {
   public function doProcessFile($file, $replace = false)
   {

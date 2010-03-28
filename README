@@ -5,6 +5,7 @@ This plugin combines javascript and stylesheet files into optimized files.
 ## How it works ?
 
 The plugin read all view.yml files and generates the correct combined files :
+
  - stylesheets
  - javascript
  
@@ -12,11 +13,22 @@ The plugin can also generate packages from a list of files. This feature allows 
 
 ## Benefits
 
- - Combine files and optimizations are when you deploy the application
+ - Combine files and optimizations are performed when the application is deployed
  - The view cache file generates the correct path to the combined files, so there is not computation at runtime.
 
 ## Available optimizers
 
+  - Global
+    - swPassDriver : do nothing, use this if you want to combine your files with no optizations
+  
+  - Javascript 
+    - swDriverGoogleClosureCompilerApi : use google closure algorithm
+    - swDriverJSMin : use JSMin algorithm
+    - swDriverJSMinPlus : user JSMin+ algorithm
+    
+  - Stylesheet
+    - swDriverCssmin : use Css min algorithm
+    - swDriverMinifyCssCompressor : use Minify Css Compressor algorithm
 
 ## Install
 
@@ -102,12 +114,46 @@ The plugin can also generate packages from a list of files. This feature allows 
                      - /css/draft/ui-theme.css
                      - /css/mg-theme.css
 
-  
-  * clear your cache
+
+ * clear your cache
 
         ./symfony cc
-  
-  * combine css and js with 
+
+ * combine css and js with 
     
         ./symfony sw:combine frontend
         ./symfony sw:combine backend
+        
+        
+## Assets version (optional)
+
+This plugin has a hidden gem : asset versioning. When css files are combined, a version number is added  to all externals references. This feature must be use with helper functions `sw_include_stylesheets()` and `sw_include_javascripts()`, this two helpers add the version number on each declared assets.
+
+The asset version format is : ASSET_FILE?_sw=ASSET_VERSION
+
+### What does it mean ?
+
+You can configure a long time expired value on your server by using simple regular expression.
+
+    (.*)\?_sw=(.*) => expired in 1 month.
+  
+Doing so, the user agent will not do any extras requests to the webserver.
+
+### Defining the asset version
+
+ * edit your app.yml file by adding these lines
+ 
+        [yml]
+        swToolbox:
+          swCombine:
+            version: 42
+
+
+ * clear your cache
+
+         ./symfony cc
+
+ * regenerate the combined css and js files with 
+
+         ./symfony sw:combine frontend
+         ./symfony sw:combine backend

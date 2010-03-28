@@ -1,5 +1,9 @@
 CREDITS
 
+The combine section is taken from sfCombinePlugin from Alexandre Mogère and François Zaninotto 
+
+  more information : http://www.symfony-project.org/plugins/sfCombinePlugin
+
 The driver section is a fork of npAssetsOptimizerPlugin from Nicolas Perriault
 
-more information : http://www.symfony-project.org/plugins/npAssetsOptimizerPlugin
+  more information : http://www.symfony-project.org/plugins/npAssetsOptimizerPlugin
