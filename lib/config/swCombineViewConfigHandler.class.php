@@ -41,11 +41,11 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     $javascripts = $this->mergeConfigValue('javascripts', $viewName);
     
     // clean stylesheet list (-*)
-    $stylesheets = $this->addAssets('javascripts', $stylesheets, false);
+    $javascripts = $this->addAssets('javascripts', $javascripts, false);
     
     // combine
     $javascripts = $this->combineValues('javascript', $javascripts, $viewName);
-    
+
     $js = $this->addAssets('Javascript', $javascripts);
   
     return implode("\n", array_merge($css, $js))."\n";
@@ -206,9 +206,10 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     $assets = array_unique($assets);
     sort($assets);
     
+
     // compute the name
     $name =  md5(serialize($assets));
-    
+
     return sprintf($format, $name);
   }
   

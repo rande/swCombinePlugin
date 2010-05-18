@@ -71,7 +71,6 @@ class swOptimizeCreateFilesTask extends sfBaseTask
       ->maxdepth(0)
       ->in($this->view_parameters->get('private_path'));
     
-    
     if(count($files) > 0 && ($confirmation || $this->askConfirmation(array_merge($files, array('--','Are you sure you want to delete these files? (y/N)')), null, false)))
     {
       $this->logSection('combine', 'remove old files');
@@ -186,6 +185,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
     $combined = array();
     foreach($assets as $asset)
     {
+      
       if($use_ignore && $this->view_handler->excludeFile($type, $asset[1]))
       {
         // $this->logSection('combine', '   - exclude : '.$asset[1]);
@@ -193,7 +193,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
         continue;
       } 
       
-      if(!$this->view_handler->isCombinable($type, $value))
+      if(!$this->view_handler->isCombinable($type, $asset[1]))
       {
         continue;
       }
