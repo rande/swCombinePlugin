@@ -29,12 +29,21 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     
     // Merge the current view's stylesheets with the app's default stylesheets
     $stylesheets = $this->mergeConfigValue('stylesheets', $viewName);
+    // clean stylesheet list (-*)
+    $stylesheets = $this->addAssets('stylesheets', $stylesheets, false);
+
+    // combine
     $stylesheets = $this->combineValues('stylesheet', $stylesheets, $viewName);
     
     $css = $this->addAssets('Stylesheet', $stylesheets);
   
     // Merge the current view's javascripts with the app's default javascripts
     $javascripts = $this->mergeConfigValue('javascripts', $viewName);
+    
+    // clean stylesheet list (-*)
+    $stylesheets = $this->addAssets('javascripts', $stylesheets, false);
+    
+    // combine
     $javascripts = $this->combineValues('javascript', $javascripts, $viewName);
     
     $js = $this->addAssets('Javascript', $javascripts);
@@ -42,7 +51,7 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     return implode("\n", array_merge($css, $js))."\n";
   }
   
-  public function combineValues($type, $values)
+  public function combineValues($type, $values, $viewName)
   {
     $combined = $final = array();
 
@@ -63,34 +72,64 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
         $packages_files = array_merge($packages_files, $package['files']);
       }
     }
-
+    
+    // load packages defined in the yaml
+    if($viewName == '')
+    {
+      $viewName = 'all';
+    }
+    
+    if(
+      isset($this->yamlConfig[$type]) && 
+      isset($this->yamlConfig[$viewName]['sw_combine']) && 
+      isset($this->yamlConfig[$viewName]['sw_combine']['include_packages']) && 
+      isset($this->yamlConfig[$viewName]['sw_combine']['include_packages'][$type])
+    )
+    {
+      foreach($this->yamlConfig[$viewName]['sw_combine']['include_packages'][$type] as $package_name)
+      {
+        if(!isset($packages[$package_name]))
+        {
+          continue;
+        }
+        
+        $final[] = sprintf('%s/%s', 
+          $this->getParameterHolder()->get('public_path'),
+          $this->getPackageName($type, $name)
+        );
+        
+        $packages_files = array_merge($packages_files, $package['files']);
+      }
+    }
+  
     // build the combined assets
     foreach($values as $value)
     {
-      $assert_name = is_array($value) ? key($value) : $value;
+      $asset_name = $value[1];
       
-      if(in_array($assert_name, $packages_files))
+      if(in_array($asset_name, $packages_files))
       {
         // the file is present in a package file, skip it
         continue;
       }
       
-      if($this->excludeFile($type, $assert_name))
+      if($this->excludeFile($type, $asset_name))
       {
-        $final[] = $value;
+        
+        $final[] = $asset_name;
         continue;
       }
 
-      if(!$this->isCombinable($type, $value))
+      if(!$this->isCombinable($type, $asset_name))
       {
-        $final[] = $value;
+
+        $final[] = $asset_name;
         continue;
       }
-      
-      $combined[] = $value;
+
+      $combined[] = $asset_name;
     }
     
-    // var_dump($combined, $this->getCombinedName($type, $combined));
     if(count($combined) > 0)
     {
       $final[] = sprintf('%s/%s', 
@@ -176,7 +215,7 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
   public function getPackageName($type, $name)
   {
     $configuration = $this->getParameterHolder()->get('configuration');
-    $format = isset($configuration[$type]['filename']) ? $configuration[$type]['filename'] : '%s';
+    $format  = isset($configuration[$type]['filename']) ? $configuration[$type]['filename'] : '%s';
     
     $name    = md5(sfInflector::underscore('package_'.$type.'_'.$name));
     
@@ -271,13 +310,12 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
       {
         if($raw_php)
         {
-          $tmp[$key] = $tmp[$key] = sprintf("  \$response->add%s('%s', '%s', %s);", $type, $key, $position, str_replace("\n", '', var_export($options, true)));
+          $tmp[$key] = sprintf("  \$response->add%s('%s', '%s', %s);", $type, $key, $position, str_replace("\n", '', var_export($options, true)));
         }
         else
         {
           $tmp[$key] = array($type, $key, $position, $options);
         }
-        
       }
     }
     

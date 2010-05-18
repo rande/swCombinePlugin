@@ -85,7 +85,7 @@ The plugin can also generate packages from a list of files. This feature allows 
                  - /js/main.js
                packages:
                  common:
-                   auto_include: true
+                   auto_include: true                 # this will include the package on ALL pages
                    files:
                      - /js/jQuery/jquery.1.2.6.js
                      - /js/jQuery/ui-1.5.3/jquery.ui.all.js
@@ -96,12 +96,11 @@ The plugin can also generate packages from a list of files. This feature allows 
                      - /js/scrollTo/jquery.scrollTo-min.js
                      - /js/main.js
 
-
              stylesheet:
                combine:  swCombineStylesheet
                driver:   swDriverCssmin
                filename: %s.css                        # %s will by replace by the combined name
-               exclude:
+               exclude:                                # this will include the package on ALL pages
                  - /css/main.css
                  - /css/draft/ui-theme.css
                  - /css/mg-theme.css
@@ -124,7 +123,25 @@ The plugin can also generate packages from a list of files. This feature allows 
         ./symfony sw:combine frontend
         ./symfony sw:combine backend
         
-        
+
+## Packages
+
+  You can include packages into the view.yml, just add these lines into the view.yml file
+
+        [yml]
+        all:
+          sw_combine:
+            include_packages:
+              javascripts: [common]
+              stylesheets: [common]
+
+        myViewSuccess:
+          sw_combine:
+            include_packages:
+              javascripts: [extra_code]
+
+
+
 ## Assets version (optional)
 
 This plugin has a hidden gem : asset versioning. When css files are combined, a version number is added  to all externals references. This feature must be use with helper functions `sw_include_stylesheets()` and `sw_include_javascripts()`, this two helpers add the version number on each declared assets.
