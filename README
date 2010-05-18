@@ -19,7 +19,7 @@ The plugin can also generate packages from a list of files. This feature allows 
 ## Available optimizers
 
   - Global
-    - swPassDriver : do nothing, use this if you want to combine your files with no optizations
+    - swPassDriver : do nothing, use this if you want to combine your files with no optimizations
   
   - Javascript 
     - swDriverGoogleClosureCompilerApi : use google closure algorithm
@@ -131,6 +131,7 @@ This plugin has a hidden gem : asset versioning. When css files are combined, a 
 
 The asset version format is : ASSET_FILE?_sw=ASSET_VERSION
 
+
 ### What does it mean ?
 
 You can configure a long time expired value on your server by using simple regular expression.
@@ -148,7 +149,6 @@ Doing so, the user agent will not do any extras requests to the webserver.
           swCombine:
             version: 42
 
-
  * clear your cache
 
          ./symfony cc
@@ -157,3 +157,12 @@ Doing so, the user agent will not do any extras requests to the webserver.
 
          ./symfony sw:combine frontend
          ./symfony sw:combine backend
+         
+         
+## Troubleshooting
+
+### css @import not loaded 
+
+   the import syntax must be : @import url('yourfile.css') or @import url("yourfile.css").
+   
+   this is not valid : @import url(yourfile.css)

@@ -86,7 +86,10 @@ class swOptimizeCreateFilesTask extends sfBaseTask
   public function combinePackagesFiles($type)
   {
     
-    foreach($this->view_parameters->get('configuration['.$type.'][packages]', array()) as $name => $package)
+    $configuration = $this->view_parameters->get('configuration');
+    $packages =  isset($configuration[$type]['packages']) ? $configuration[$type]['packages'] : array();
+    
+    foreach($packages as $name => $package)
     {
       $assets = array();
       foreach($package['files'] as $file)
@@ -169,8 +172,9 @@ class swOptimizeCreateFilesTask extends sfBaseTask
   public function combineAndOptimize($type, $assets, $use_ignore = true, $force_name_to = false)
   {
     
-    $combine_class = $this->view_parameters->get('configuration['.$type.'][combine]');
-    
+    $configuration = $this->view_parameters->get('configuration');
+    $combine_class =  $configuration[$type]['combine'];
+
     if(!class_exists($combine_class))
     {
       
@@ -252,8 +256,8 @@ class swOptimizeCreateFilesTask extends sfBaseTask
    */
   public function getDriver($type)
   {
-    
-    $driver = $this->view_parameters->get('configuration['.$type.'][driver]', false);
+    $configuration = $this->view_parameters->get('configuration');
+    $driver =  $configuration[$type]['driver'];
     
     if(!class_exists($driver))
     {

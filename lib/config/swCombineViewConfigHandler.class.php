@@ -48,8 +48,11 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
 
     $packages_files = array();
     
+    $configuration = $this->getParameterHolder()->get('configuration');
+    $packages = isset($configuration[$type]['packages']) ? $configuration[$type]['packages'] : array();
+    
     // build the package assets
-    foreach($this->getParameterHolder()->get('configuration['.$type.'][packages]', array()) as $name => $package)
+    foreach($packages as $name => $package)
     {
       if(isset($package['auto_include']) && $package['auto_include'])
       {
@@ -87,6 +90,7 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
       $combined[] = $value;
     }
     
+    // var_dump($combined, $this->getCombinedName($type, $combined));
     if(count($combined) > 0)
     {
       $final[] = sprintf('%s/%s', 
@@ -104,8 +108,10 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     $combined = $final = array();
     
     // build the package assets
+    $configuration = $this->getParameterHolder()->get('configuration');
+    $packages = isset($configuration[$type]['packages']) ? $configuration[$type]['packages'] : array();
     
-    foreach($this->getParameterHolder()->get('configuration['.$type.'][packages]', array()) as $name => $package)
+    foreach($packages as $name => $package)
     {
       if(isset($package['auto_include']) && $package['auto_include'])
       {
@@ -145,8 +151,9 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     
   public function getCombinedName($type, array $assets)
   {
-    $format = $this->getParameterHolder()->get('configuration['.$type.'][filename]', '%s');
-
+    $configuration = $this->getParameterHolder()->get('configuration');
+    $format = isset($configuration[$type]['filename']) ? $configuration[$type]['filename'] : '%s';
+    
     // make sure we have a flat list
     foreach($assets as $pos => $asset)
     {
@@ -168,7 +175,9 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
   
   public function getPackageName($type, $name)
   {
-    $format  = $this->getParameterHolder()->get('configuration['.$type.'][filename]', '%s');
+    $configuration = $this->getParameterHolder()->get('configuration');
+    $format = isset($configuration[$type]['filename']) ? $configuration[$type]['filename'] : '%s';
+    
     $name    = md5(sfInflector::underscore('package_'.$type.'_'.$name));
     
     return sprintf($format, $name);
@@ -209,7 +218,9 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
   
   public function excludeFile($type, $file)
   {
-    $exclude = $this->getParameterHolder()->get('configuration['.$type.'][exclude]', array());
+    
+    $configuration = $this->getParameterHolder()->get('configuration');
+    $exclude = isset($configuration[$type]['exclude']) ? $configuration[$type]['exclude'] : array();
     
     if(in_array($file, $exclude))
     {

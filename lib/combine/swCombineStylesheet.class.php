@@ -29,18 +29,8 @@ class swCombineStylesheet extends swCombineBase
     $this->path_pos = -1;
     $this->paths    = array();
     
-    $include = @file_get_contents($asset);
-    
-    if(!$include)
-    {
-      throw new Exception('unable to read the asset : '.$asset);
-    }
-    
-    // remove BOM
-    $contents = $this->removeBom($contents);
-    
     // import css from external declarations
-    $contents = $this->fixImportStatement($path, $include);
+    $contents = $this->fixImportStatement($asset);
     
     // get the version so each time the cache is cleared then the image are reload 
     // from the webserver
@@ -61,29 +51,45 @@ class swCombineStylesheet extends swCombineBase
     return $contents;
   }
   
-  public function fixImportStatement($path, $include)
+  public function fixImportStatement($asset)
   {
+    $contents = @file_get_contents($asset);
+    
+    if(!$contents)
+    {
+      throw new Exception('unable to read the asset : '.$asset);
+    }
+    
+    // remove BOM
+    $contents = $this->removeBom($contents);
+    
+    $asset = realpath($asset);
+    $info = pathinfo($asset);
     
     $this->path_pos++;
 
     // store the current path in the recursion
-    $this->paths[$this->path_pos] = $path;
+    $this->paths[$this->path_pos] = $info['dirname'];
     
     // fix image path
-    $content = preg_replace_callback('/url\(("|\'|)(.*)("|\'|)\)/smU', array($this, 'fixImportImageCallback'), $include);
+    $fix = preg_replace_callback('/url\(("|\'|)(.*)("|\'|)\)/smU', array($this, 'fixImportImageCallback'), $contents);
     
-    // fetch the contents of any include file
-    $content = preg_replace_callback('/@import url\([ ]*[\'|"](.*)[\'|"][ ]*\);/smU', array($this, 'fixImportStatementCallback'), $content);
-    
-    $this->path_pos--;
-    
-    if(!$content)
+    if($fix)
     {
-      
-      return $include; // no match in the recursion
+      $contents = $fix;
     }
     
-    return $content;
+    // fetch the contents of any include files
+    $fix = preg_replace_callback('/@import url\([ ]*[\'|"](.*)[\'|"][ ]*\);/smU', array($this, 'fixImportStatementCallback'), $contents);
+
+    if($fix)
+    {
+      $contents = $fix;
+    }
+    
+    $this->path_pos--;
+        
+    return $contents;
   }
   
   public function fixImportImageCallback($matches)
@@ -93,19 +99,24 @@ class swCombineStylesheet extends swCombineBase
     if(preg_match('/\.css/', $matches[2]))
     {
       
-      return  $matches[0];
+      return $matches[0];
     }
     
     // fix image path 
     $web_dir = sfConfig::get('sf_web_dir');
+        
+    $file = $this->paths[$this->path_pos].'/'.($matches[2]{0} == '/' ? substr($matches[2], 1) : $matches[2]);
+    $t = $file;
+    $file = realpath($file);
     
-    $infos = pathinfo($this->paths[$this->path_pos]);
+    if($file)
+    {
+      $file = str_replace($web_dir, '', $file);
+
+      return 'url('.$file.')';
+    }
     
-    $file = $infos['dirname'].'/'.($matches[2]{0} == '/' ? substr($matches[2], 1) : $matches[2]);
-
-    $file = str_replace($web_dir, '', $file);
-
-    return 'url('.$file.')';
+    return 'none';
   }
   
   /**
@@ -113,20 +124,18 @@ class swCombineStylesheet extends swCombineBase
    */
   public function fixImportStatementCallback($matches)
   {
-    $infos = pathinfo($this->paths[$this->path_pos]);
-    
-    $file = $infos['dirname'].'/'.$matches[2];
+    $infos = $this->paths[$this->path_pos];
+
+    $file = $this->paths[$this->path_pos].'/'.$matches[1];
     
     $content = @file_get_contents($file);
 
     if($content)
     {
       
-      // return $content;
       return $this->fixImportStatement($file, $content);
     }
     
-    // cannot fix import
-    return $matches[0]."/* cannot fix import statement */";
+    throw new sfException('Unable to import statement file : '.$file);
   }
 }
