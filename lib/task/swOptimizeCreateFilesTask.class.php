@@ -180,8 +180,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
       throw new sfException(sprintf('The combine class %s does not exist', $combine_class));
     }
     
-    // combine css files
-    $combine = new $combine_class;
+    $combine = new $combine_class($this->dispatcher, $this->formatter);
     $combined = array();
     foreach($assets as $asset)
     {

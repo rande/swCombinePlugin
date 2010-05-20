@@ -105,16 +105,23 @@ class swCombineStylesheet extends swCombineBase
     // fix image path 
     $web_dir = sfConfig::get('sf_web_dir');
         
-    $file = $this->paths[$this->path_pos].'/'.($matches[2]{0} == '/' ? substr($matches[2], 1) : $matches[2]);
-    $t = $file;
-    $file = realpath($file);
+    if($matches[2]{0} == '/')
+    {
+      $file = $matches[2];
+    }
+    else
+    {
+      $file = $this->paths[$this->path_pos].'/'.$matches[2];
+      $file = realpath($file);
+      $file = str_replace($web_dir, '', $file);
+    }
     
     if($file)
     {
-      $file = str_replace($web_dir, '', $file);
-
       return 'url('.$file.')';
     }
+    
+    $this->logSection('fix-image', 'unable to find the file : '.$matches[2]);
     
     return 'none';
   }
