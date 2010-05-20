@@ -14,11 +14,20 @@ function sw_get_javascripts()
   $version = $params['version'];
   
   $response = sfContext::getInstance()->getResponse();
+  $included_files = $response->getCombinedAssets();
+  
   sfConfig::set('symfony.asset.javascripts_included', true);
 
   $html = '';
   foreach ($response->getJavascripts() as $file => $options)
   {
+    // avoid loading combined files
+    if(in_array($file, $included_files))
+    {
+
+     continue;
+    }
+     
     $file = $version ? $file.'?v='.$version : $file;
     
     $html .= javascript_include_tag($file, $options);
@@ -33,11 +42,20 @@ function sw_get_stylesheets()
   $version = $params['version'];
   
   $response = sfContext::getInstance()->getResponse();
+  $included_files = $response->getCombinedAssets();
+  
   sfConfig::set('symfony.asset.stylesheets_included', true);
 
   $html = '';
   foreach ($response->getStylesheets() as $file => $options)
   {
+    // avoid loading combined files
+    if(in_array($file, $included_files))
+    {
+
+     continue;
+    }
+    
     $file = $version ? $file.'?v='.$version : $file;
     
     $html .= stylesheet_tag($file, $options);
@@ -56,3 +74,11 @@ function sw_include_javascripts()
   echo sw_get_javascripts();  
 }
 
+function sw_combine_debug()
+{
+  if(ProjectConfiguration::getActive()->isDebug())
+  {
+    $response = sfContext::getInstance()->getResponse();
+    echo "<!-- DEBUG MODE - \nCombined files : \n".var_export($response->getCombinedAssets(), 1)."\n -->\n";
+  }
+}

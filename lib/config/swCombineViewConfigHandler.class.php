@@ -17,6 +17,9 @@
 class swCombineViewConfigHandler extends sfViewConfigHandler
 {
 
+  protected
+    $assets_loaded = array();
+    
   /**
    * Adds stylesheets and javascripts statements to the data.
    *
@@ -48,7 +51,9 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
 
     $js = $this->addAssets('Javascript', $javascripts);
   
-    return implode("\n", array_merge($css, $js))."\n";
+    // set current js and css loaded, also add information about the current defined assets
+    return implode("\n", array_merge($css, $js)).
+      "\n  \$response->defineCombinedAssets(".var_export($this->assets_loaded, 1).");\n";
   }
   
   public function combineValues($type, $values, $viewName)
@@ -137,6 +142,9 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
         $this->getCombinedName($type, $combined)
       );
     }
+    
+    // keep a track of combined filed files for this view
+    $this->assets_loaded = array_merge($this->assets_loaded, $packages_files, $combined);
     
     return $final;
   }
