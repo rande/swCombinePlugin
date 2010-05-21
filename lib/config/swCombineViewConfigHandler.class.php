@@ -47,8 +47,15 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     $javascripts = $this->addAssets('javascripts', $javascripts, false);
     
     // combine
-    $javascripts = $this->combineValues('javascript', $javascripts, $viewName);
+    $t_javascripts = $this->combineValues('javascript', $javascripts, $viewName);
 
+    // make sure the combined javascripts are always loaded first
+    $javascripts = array();    
+    foreach($t_javascripts as $javascript)
+    {
+      $javascripts[] = array($javascript => array('position' => 'first'));
+    }
+    
     $js = $this->addAssets('Javascript', $javascripts);
   
     // set current js and css loaded, also add information about the current defined assets
