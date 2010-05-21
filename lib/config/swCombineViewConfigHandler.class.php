@@ -239,9 +239,9 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
    *
    * @return string The value associated with this key name and category
    */
-  public function exposeMergeConfigValue($yamlConfig, $keyName, $category)
+  public function exposeMergeConfigValue($keyName, $category)
   {
-    return $this->mergeConfigValue($yamlConfig, $keyName, $category);
+    return $this->mergeConfigValue($keyName, $category);
   }
   
   public function setYamlConfig($config)
