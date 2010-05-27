@@ -71,6 +71,7 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     
     $configuration = $this->getParameterHolder()->get('configuration');
     $packages = isset($configuration[$type]['packages']) ? $configuration[$type]['packages'] : array();
+    $public_path =  isset($configuration[$type]['public_path']) ? $configuration[$type]['public_path'] : '/sw-combine';
     
     // build the package assets
     foreach($packages as $name => $package)
@@ -105,10 +106,7 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
           continue;
         }
         
-        $final[] = sprintf('%s/%s', 
-          $this->getParameterHolder()->get('public_path'),
-          $this->getPackageName($type, $name)
-        );
+        $final[] = sprintf('%s/%s', $public_path, $this->getPackageName($type, $name));
         
         $packages_files = array_merge($packages_files, $package['files']);
       }
@@ -144,10 +142,7 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     
     if(count($combined) > 0)
     {
-      $final[] = sprintf('%s/%s', 
-        $this->getParameterHolder()->get('public_path'),
-        $this->getCombinedName($type, $combined)
-      );
+      $final[] = sprintf('%s/%s', $public_path, $this->getCombinedName($type, $combined));
     }
     
     // keep a track of combined filed files for this view
