@@ -209,5 +209,4 @@ Doing so, the user agent will not do any extras requests to the webserver.
 
 ### my background pictures get stripped out
 
-   The plugin uses this css paths and sf_web_dir to find picture, if the picture does not exist then the plugin set none as a background, to avoid 404 request on the webserver
-   
+   The plugin uses css paths and sf_web_dir to find pictures, if the pictures do not exist then the plugin set *none* instead of *url(non_existant_background)*, to avoid 404 requests on the webserver
