@@ -277,7 +277,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
   {
     $path = dirname($filename);
     
-    if(!is_dir($path) && !@mkdir($path, '0755', true))
+    if(!is_dir($path) && !@mkdir($path, 0755, true))
     {
       
       throw new sfException(sprintf('The folder %s cannot be created', $path));
