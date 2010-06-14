@@ -37,7 +37,7 @@ The plugin can also generate packages from a list of files. This feature allows 
         [php] 
         require_once(dirname(__FILE__).'/../plugins/swCombinePlugin/lib/config/swCombineViewConfigHandler.class.php');
         
-        class ProjectConfiguration extends ysfProjectConfiguration
+        class ProjectConfiguration extends sfProjectConfiguration
         {
           public function setup()
           {
@@ -125,10 +125,11 @@ The plugin can also generate packages from a list of files. This feature allows 
         ./symfony sw:combine backend
 
  * update your templates files to use these helpers :
- 
-      sw_include_stylesheets()
-      sw_include_javascripts()
-      sw_combine_debug() 
+    
+        use_helper('swCombine')
+        sw_include_stylesheets()
+        sw_include_javascripts()
+        sw_combine_debug()
                     
 
 ## Packages
@@ -190,3 +191,23 @@ Doing so, the user agent will not do any extras requests to the webserver.
    the import syntax must be : @import url('yourfile.css') or @import url("yourfile.css").
    
    this is not valid : @import url(yourfile.css)
+   
+### Class 'swCombineViewConfigHandler' not found
+
+   make sure the swCombineViewConfigHandler class is included in the ProjectConfiguration.class.php file
+   
+   
+        require_once(dirname(__FILE__).'/../plugins/swCombinePlugin/lib/config/swCombineViewConfigHandler.class.php');
+
+        class ProjectConfiguration extends sfProjectConfiguration
+        [...]
+        
+### unable to read the asset : /home/[...]/yourfile.css 
+
+   All your css and js files must be relative, like /js/asds.js and /css/toto.css, the *bad* magic from symfony does not work
+   
+
+### my background pictures get stripped out
+
+   The plugin uses this css paths and sf_web_dir to find picture, if the picture does not exist then the plugin set none as a background, to avoid 404 request on the webserver
+   
