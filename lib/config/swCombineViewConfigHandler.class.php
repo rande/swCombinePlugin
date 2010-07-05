@@ -32,30 +32,22 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     
     // Merge the current view's stylesheets with the app's default stylesheets
     $stylesheets = $this->mergeConfigValue('stylesheets', $viewName);
+    
     // clean stylesheet list (-*)
     $stylesheets = $this->addAssets('stylesheets', $stylesheets, false);
-
+    
     // combine
     $stylesheets = $this->combineValues('stylesheet', $stylesheets, $viewName);
-    
+
     $css = $this->addAssets('Stylesheet', $stylesheets);
-  
+    
     // Merge the current view's javascripts with the app's default javascripts
     $javascripts = $this->mergeConfigValue('javascripts', $viewName);
-    
     // clean stylesheet list (-*)
     $javascripts = $this->addAssets('javascripts', $javascripts, false);
-    
     // combine
-    $t_javascripts = $this->combineValues('javascript', $javascripts, $viewName);
+    $javascripts = $this->combineValues('javascript', $javascripts, $viewName);
 
-    // make sure the combined javascripts are always loaded first
-    $javascripts = array();    
-    foreach($t_javascripts as $javascript)
-    {
-      $javascripts[] = array($javascript => array('position' => 'first'));
-    }
-    
     $js = $this->addAssets('Javascript', $javascripts);
   
     // set current js and css loaded, also add information about the current defined assets
@@ -65,23 +57,33 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
   
   public function combineValues($type, $values, $viewName)
   {
-    $combined = $final = array();
+    $combined_media = $final = array();
 
     $packages_files = array();
     
-    $configuration = $this->getParameterHolder()->get('configuration');
-    $packages = isset($configuration[$type]['packages']) ? $configuration[$type]['packages'] : array();
-    $public_path =  isset($configuration[$type]['public_path']) ? $configuration[$type]['public_path'] : '/sw-combine';
+    $configuration  = $this->getParameterHolder()->get('configuration');
+    $packages       = isset($configuration[$type]['packages']) ? $configuration[$type]['packages'] : array();
+    $public_path    =  isset($configuration[$type]['public_path']) ? $configuration[$type]['public_path'] : '/sw-combine';
     
     // build the package assets
     foreach($packages as $name => $package)
     {
       if(isset($package['auto_include']) && $package['auto_include'])
       {
-        $final[] = sprintf('%s/%s', 
-          $this->getParameterHolder()->get('public_path'),
-          $this->getPackageName($type, $name)
-        );
+        $settings = array();
+        $filename = sprintf('%s/%s', $this->getParameterHolder()->get('public_path'), $this->getPackageName($type, $name));
+        
+        if($type == 'stylesheet')
+        {
+          $settings[$filename] = array('media' => 'screen');
+        }
+        else if($type == 'javascript')
+        {
+          $settings[$filename] = array('position' => 'first');
+        }
+        
+        $final[] = $settings;
+        
         $packages_files = array_merge($packages_files, $package['files']);
       }
     }
@@ -106,7 +108,19 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
           continue;
         }
         
-        $final[] = sprintf('%s/%s', $public_path, $this->getPackageName($type, $name));
+        $filename = sprintf('%s/%s', $public_path, $this->getPackageName($type, $name));
+        $settings = array();
+        
+        if($type == 'stylesheet')
+        {
+          $settings[$filename] = array('media' => 'screen');
+        }
+        else if($type == 'javascript')
+        {
+          $settings[$filename] = array('position' => 'first');
+        }
+        
+        $final[] = $settings;
         
         $packages_files = array_merge($packages_files, $package['files']);
       }
@@ -115,7 +129,24 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     // build the combined assets
     foreach($values as $value)
     {
+      // TODO : add a dimension to handle media type
       $asset_name = $value[1];
+      
+      if($type == 'stylesheet')
+      {
+        $media = array_key_exists('media', $value[3]) ? $value[3]['media'] : 'screen';
+
+        $settings = array($asset_name => array(
+          'media' => $media
+        ));
+      }
+      else if($type == 'javascript')
+      {
+        $media = array_key_exists('media', $value[3]) ? $value[3] : '';
+        $settings = array($asset_name => array(
+          'position' => $media
+        ));
+      }
       
       if(in_array($asset_name, $packages_files))
       {
@@ -125,31 +156,68 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
       
       if($this->excludeFile($type, $asset_name))
       {
+        $final[] = $settings;
         
-        $final[] = $asset_name;
         continue;
       }
 
       if(!$this->isCombinable($type, $asset_name))
       {
-
-        $final[] = $asset_name;
+        $final[] = $settings;
+        
         continue;
       }
-
-      $combined[] = $asset_name;
+      
+      if($type == 'stylesheet')
+      {
+        if(!isset($combined_media[$media]))
+        {
+          $combined_media[$media] = array();
+        }
+        
+        $combined_media[$media][] = $value;
+      }
+      else if($type == 'javascript')
+      {
+        $combined_media[] = $value;
+      }
     }
     
-    if(count($combined) > 0)
+    // compute the path for each media type
+    if($type == 'stylesheet')
     {
-      $final[] = sprintf('%s/%s', $public_path, $this->getCombinedName($type, $combined));
+      foreach($combined_media as $media => $asset_names)
+      {
+        if(count($asset_names) > 0)
+        {
+          
+          $final[] = array(
+            sprintf('%s/%s', $public_path, $this->getCombinedName($type, $asset_names)) => array(
+              'media' => $media, // for now package works only for screen media
+            )
+          );
+        
+          $this->assets_loaded = array_merge($this->assets_loaded, $asset_names);
+        }
+      }
     }
-    
-    // keep a track of combined filed files for this view
-    $this->assets_loaded = array_merge($this->assets_loaded, $packages_files, $combined);
+    else if($type == 'javascript')
+    {
+      if(count($combined_media) > 0)
+      {
+        $final[] = array(
+          sprintf('%s/%s', $public_path, $this->getCombinedName($type, $combined_media)) => array(
+            'position' => '',
+          )
+        );
+      }
+    }
+    // keep a track of combined files for this view
+    $this->assets_loaded = array_merge($this->assets_loaded, $packages_files);
     
     return $final;
   }
+  
   
   public function combineAssets($type, $assets)
   {
@@ -206,20 +274,20 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     // make sure we have a flat list
     foreach($assets as $pos => $asset)
     {
-      if(is_array($assets[$pos]))
+      if(is_array($asset))
       {
-        $assets[$pos] = key($asset);
+        $assets[$pos] = $asset[1];
       }
     }
-        
+  
+    
     // make sure the array is always the same
     $assets = array_unique($assets);
     sort($assets);
     
-
     // compute the name
     $name =  md5(serialize($assets));
-
+    
     return sprintf($format, $name);
   }
   
@@ -293,11 +361,12 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     foreach ((array) $assets as $asset)
     {
       $position = '';
+
       if (is_array($asset))
       {
         $key = key($asset);
         $options = $asset[$key];
-        if (isset($options['position']))
+        if (array_key_exists('position', $options))
         {
           $position = $options['position'];
           unset($options['position']);

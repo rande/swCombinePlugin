@@ -44,6 +44,7 @@ abstract class swCombineBase
     $contents = '';
     foreach($this->files as $file)
     {
+      $file = sprintf('%s/%s', sfConfig::get('sf_web_dir'), $file);
       $contents .= $this->getContents($file)."\n";
     }
     

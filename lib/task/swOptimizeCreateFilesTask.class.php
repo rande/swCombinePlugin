@@ -131,6 +131,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
       $modules[] = str_replace(sfConfig::get('sf_app_module_dir').'/', '', $module);
     }
 
+
     foreach($modules as $module)
     {
       $this->logSection('combine', 'module : '.$module);
@@ -180,41 +181,83 @@ class swOptimizeCreateFilesTask extends sfBaseTask
       throw new sfException(sprintf('The combine class %s does not exist', $combine_class));
     }
     
-    $combine = new $combine_class($this->dispatcher, $this->formatter);
     $combined = array();
+    $combine  = null; 
+    $combines = array(); 
     foreach($assets as $asset)
     {
+
+      if($type == 'javascript' && !$combine)
+      {
+        $combine = new $combine_class($this->dispatcher, $this->formatter);
+      }
+      else
+      {
+        if(!array_key_exists('media', $asset[3]))
+        {
+          $asset[3] = array('media' => 'screen');
+        }
+        
+        $media = $asset[3]['media'];
+        
+        if(!array_key_exists($media, $combines))
+        {
+          $combines[$media] = new $combine_class($this->dispatcher, $this->formatter);
+        }
+      }
       
       if($use_ignore && $this->view_handler->excludeFile($type, $asset[1]))
       {
-        // $this->logSection('combine', '   - exclude : '.$asset[1]);
+        $this->logSection('combine', '   - exclude : '.$asset[1]);
         
         continue;
       } 
       
       if(!$this->view_handler->isCombinable($type, $asset[1]))
       {
+        $this->logSection('combine', '   - not combinable : '.$asset[1]);
+                
         continue;
       }
       
       $this->logSection('combine', '   + add : '.$asset[1]);
       
-      $combined[] = $asset[1];
-      $combine->addFile(sprintf('%s/%s', sfConfig::get('sf_web_dir'), $asset[1]));
+      if($type == 'stylesheet')
+      {
+        $combines[$media]->addFile($asset[1]);
+      }
+      else
+      {
+        $combine->addFile($asset[1]);
+      }
     }
 
+    if($type == 'stylesheet')
+    {
+      foreach($combines as $name => $combine)
+      {
+        $this->combine($type, $combine, $force_name_to);
+      }
+    }
+    else
+    {
+      $this->combine($type, $combine, $force_name_to);
+    }
+  }
+  
+  public function combine($type, $combine, $force_name_to = false)
+  {
     if(count($combine->getFiles()) == 0)
     {
       $this->logSection('combine', '   ~ no files to add : '.$type);
 
       return;
     }
-    
+
     $path = sprintf('%s/%s', 
       $this->view_parameters->get('private_path'), 
-      $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combined)
+      $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combine->getFiles())
     );
-    
     
     if(is_file($path))
     {
@@ -245,7 +288,6 @@ class swOptimizeCreateFilesTask extends sfBaseTask
       $results['optimizedSize'] / 1024, 
       100 - $results['ratio']
     ));
-    
   }
   
   /**
