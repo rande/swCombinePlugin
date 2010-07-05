@@ -271,6 +271,11 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     $configuration = $this->getParameterHolder()->get('configuration');
     $format = isset($configuration[$type]['filename']) ? $configuration[$type]['filename'] : '%s';
     
+    if($assets == null)
+    {
+      throw new sfException('$assets cannot be null');
+    }
+    
     // make sure we have a flat list
     foreach($assets as $pos => $asset)
     {
@@ -279,7 +284,6 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
         $assets[$pos] = $asset[1];
       }
     }
-  
     
     // make sure the array is always the same
     $assets = array_unique($assets);
@@ -287,7 +291,7 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     
     // compute the name
     $name =  md5(serialize($assets));
-    
+
     return sprintf($format, $name);
   }
   

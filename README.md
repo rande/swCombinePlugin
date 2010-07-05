@@ -186,6 +186,10 @@ Doing so, the user agent will not do any extras requests to the webserver.
          
 ## Troubleshooting
 
+### how can I set a media type for each package ?
+
+   for now this feature is not implemented.
+
 ### css @import not loaded 
 
    the import syntax must be : @import url('yourfile.css') or @import url("yourfile.css").

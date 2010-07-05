@@ -134,6 +134,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
 
     foreach($modules as $module)
     {
+      
       $this->logSection('combine', 'module : '.$module);
       
       $configPath = sprintf('modules/%s/config/view.yml', $module);
@@ -281,7 +282,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
     $results = $driver->getResults();
     
 
-    $this->logSection('file+', sprintf(' > %s', $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combined)));
+    $this->logSection('file+', sprintf(' > %s', $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combine->getFiles())));
     
     $this->logSection('optimize', sprintf(' > from %.2fKB to %.2fKB, ratio -%s%%', 
       $results['originalSize'] / 1024, 
