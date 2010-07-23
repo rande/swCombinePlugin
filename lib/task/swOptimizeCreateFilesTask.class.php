@@ -185,6 +185,13 @@ class swOptimizeCreateFilesTask extends sfBaseTask
     $combined = array();
     $combine  = null; 
     $combines = array(); 
+    
+    if(!is_array($assets) || count($assets) == 0)
+    {
+      
+      return;
+    }
+    
     foreach($assets as $asset)
     {
 
@@ -240,7 +247,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
         $this->combine($type, $combine, $force_name_to);
       }
     }
-    else ($type == 'javascript' && $combine)
+    else if ($type == 'javascript' && $combine)
     {
       $this->combine($type, $combine, $force_name_to);
     }
