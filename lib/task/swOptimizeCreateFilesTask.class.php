@@ -240,7 +240,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
         $this->combine($type, $combine, $force_name_to);
       }
     }
-    else
+    else ($type == 'javascript' && $combine)
     {
       $this->combine($type, $combine, $force_name_to);
     }
