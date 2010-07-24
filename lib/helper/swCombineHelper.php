@@ -56,7 +56,9 @@ function sw_get_stylesheets()
      continue;
     }
     
-    $file = $version ? $file.'?v='.$version : $file;
+    // append version if version is set
+    // or if the url does not contains a `?`
+    $file = $version && strpos($file, '?') === false ? $file.'?v='.$version : $file;
     
     $html .= stylesheet_tag($file, $options);
   }
