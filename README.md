@@ -67,10 +67,10 @@ The plugin can also generate packages from a list of files. This feature allows 
           # class: sfViewConfigHandler
           class: swCombineViewConfigHandler 
           param:
-           private_path: %SF_WEB_DIR%/sw-combine
            configuration:
              javascript:
                public_path:  /sw-combine
+               private_path: %SF_WEB_DIR%/sw-combine
                combine:  swCombineJavascript
                driver:   swDriverJSMinPlus
                filename: %s.js                         # %s will by replace by the combined name
@@ -98,6 +98,7 @@ The plugin can also generate packages from a list of files. This feature allows 
 
              stylesheet:
                public_path:  /sw-combine
+               private_path: %SF_WEB_DIR%/sw-combine
                combine:  swCombineStylesheet
                driver:   swDriverCssmin
                filename: %s.css                        # %s will by replace by the combined name

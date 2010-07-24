@@ -67,9 +67,22 @@ class swOptimizeCreateFilesTask extends sfBaseTask
    */
   public function removeFiles($confirmation)
   {
-    $files = sfFinder::type('file')
-      ->maxdepth(0)
-      ->in($this->view_parameters->get('private_path'));
+    $files = array();
+    foreach($this->view_parameters->get('configuration') as $type => $params)
+    {
+      if(!in_array($type, array('javascript', 'stylesheet')))
+      {
+        continue;
+      }
+      
+      if(!isset($params['private_path']))
+      {
+        continue;
+      }
+      
+      $files = array_merge($files, sfFinder::type('file')->maxdepth(0)->in($params['private_path']));
+      
+    }
     
     if(count($files) > 0 && ($confirmation || $this->askConfirmation(array_merge($files, array('--','Are you sure you want to delete these files? (y/N)')), null, false)))
     {
@@ -262,8 +275,16 @@ class swOptimizeCreateFilesTask extends sfBaseTask
       return;
     }
 
+    $configuration  = $this->view_parameters->get('configuration');
+    $private_path    = isset($configuration[$type]['private_path']) ? $configuration[$type]['private_path'] : false;
+    
+    if(!$private_path)
+    {
+      throw new sfException(sprintf('Please set a `private_path` value for type `%s`', $type));
+    }
+
     $path = sprintf('%s/%s', 
-      $this->view_parameters->get('private_path'), 
+      $private_path, 
       $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combine->getFiles())
     );
     

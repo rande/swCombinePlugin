@@ -79,6 +79,11 @@ function sw_combine_debug()
   if(ProjectConfiguration::getActive()->isDebug())
   {
     $response = sfContext::getInstance()->getResponse();
-    echo "<!-- DEBUG MODE - \nCombined files : \n".var_export($response->getCombinedAssets(), 1)."\n -->\n";
+    echo "<!-- DEBUG MODE - \nCombined information : \n";
+    foreach($response->getCombinedAssets() as $information)
+    {
+      echo $information."\n";
+    } 
+    echo "\n-->\n";
   }
 }

@@ -17,9 +17,12 @@
 class swCombineViewConfigHandler extends sfViewConfigHandler
 {
 
-  protected
-    $assets_loaded = array();
-    
+  protected $debug_output  = array();
+  
+  public function addDebugInformation($value)
+  {
+    $this->debug_output[] = $value;
+  }
   /**
    * Adds stylesheets and javascripts statements to the data.
    *
@@ -52,7 +55,33 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
   
     // set current js and css loaded, also add information about the current defined assets
     return implode("\n", array_merge($css, $js)).
-      "\n  \$response->defineCombinedAssets(".var_export($this->assets_loaded, 1).");\n";
+      "\n  \$response->defineCombinedAssets(".var_export($this->debug_output, 1).");\n";
+  }
+  
+  /**
+   * Merges configuration values for a given key and category for packages.
+   *
+   * @param string $keyName  The key name
+   * @param string $category The category name
+   *
+   * @return string The value associated with this key name and category
+   */
+  protected function mergePackageConfigValue($keyName, $category)
+  {
+    $values = array();
+    $keyName = $keyName.'s'; // fix bug due to wrong naming convention
+  
+    if (isset($this->yamlConfig['all']['sw_combine']['include_packages'][$keyName]) && is_array($this->yamlConfig['all']['sw_combine']['include_packages'][$keyName]))
+    {
+      $values = $this->yamlConfig['all']['sw_combine']['include_packages'][$keyName];
+    }
+
+    if ($category && isset($this->yamlConfig[$category]['sw_combine']['include_packages'][$keyName]) && is_array($this->yamlConfig[$category]['sw_combine']['include_packages'][$keyName]))
+    {
+      $values = array_merge($values, $this->yamlConfig[$category]['sw_combine']['include_packages'][$keyName]);
+    }
+        
+    return $values;
   }
   
   public function combineValues($type, $values, $viewName)
@@ -63,7 +92,7 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     
     $configuration  = $this->getParameterHolder()->get('configuration');
     $packages       = isset($configuration[$type]['packages']) ? $configuration[$type]['packages'] : array();
-    $public_path    =  isset($configuration[$type]['public_path']) ? $configuration[$type]['public_path'] : '/sw-combine';
+    $public_path    = isset($configuration[$type]['public_path']) ? $configuration[$type]['public_path'] : '/sw-combine';
     
     // build the package assets
     foreach($packages as $name => $package)
@@ -71,7 +100,7 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
       if(isset($package['auto_include']) && $package['auto_include'])
       {
         $settings = array();
-        $filename = sprintf('%s/%s', $this->getParameterHolder()->get('public_path'), $this->getPackageName($type, $name));
+        $filename = sprintf('%s/%s', $public_path, $this->getPackageName($type, $name));
         
         if($type == 'stylesheet')
         {
@@ -85,6 +114,8 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
         $final[] = $settings;
         
         $packages_files = array_merge($packages_files, $package['files']);
+        
+        $this->addDebugInformation(sprintf('{package} `%s` (auto-include) : %s => %s', $name, $filename, var_export($package['files'], 1)));
       }
     }
     
@@ -94,42 +125,37 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
       $viewName = 'all';
     }
     
-    if(
-      isset($this->yamlConfig[$type]) && 
-      isset($this->yamlConfig[$viewName]['sw_combine']) && 
-      isset($this->yamlConfig[$viewName]['sw_combine']['include_packages']) && 
-      isset($this->yamlConfig[$viewName]['sw_combine']['include_packages'][$type])
-    )
-    {
-      foreach($this->yamlConfig[$viewName]['sw_combine']['include_packages'][$type] as $package_name)
-      {
-        if(!isset($packages[$package_name]))
-        {
-          continue;
-        }
-        
-        $filename = sprintf('%s/%s', $public_path, $this->getPackageName($type, $name));
-        $settings = array();
-        
-        if($type == 'stylesheet')
-        {
-          $settings[$filename] = array('media' => 'screen');
-        }
-        else if($type == 'javascript')
-        {
-          $settings[$filename] = array('position' => 'first');
-        }
-        
-        $final[] = $settings;
-        
-        $packages_files = array_merge($packages_files, $package['files']);
-      }
-    }
+    $include_packages = $this->mergePackageConfigValue($type, $viewName);
   
+    foreach($include_packages as $package_name)
+    {
+      if(!isset($packages[$package_name]))
+      {
+        continue;
+      }
+      
+      $filename = sprintf('%s/%s', $public_path, $this->getPackageName($type, $package_name));
+      $settings = array();
+      
+      if($type == 'stylesheet')
+      {
+        $settings[$filename] = array('media' => 'screen');
+      }
+      else if($type == 'javascript')
+      {
+        $settings[$filename] = array('position' => 'first');
+      }
+      
+      $final[] = $settings;
+      
+      $packages_files = array_merge($packages_files, $packages[$package_name]['files']);
+      
+      $this->addDebugInformation(sprintf('{package} `%s` : %s => %s', $package_name, $filename, var_export($packages[$package_name]['files'], 1)));
+    }
+
     // build the combined assets
     foreach($values as $value)
     {
-      // TODO : add a dimension to handle media type
       $asset_name = $value[1];
       
       if($type == 'stylesheet')
@@ -175,11 +201,11 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
           $combined_media[$media] = array();
         }
         
-        $combined_media[$media][] = $value;
+        $combined_media[$media][] = $value[1];
       }
       else if($type == 'javascript')
       {
-        $combined_media[] = $value;
+        $combined_media[] = $value[1];
       }
     }
     
@@ -190,14 +216,14 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
       {
         if(count($asset_names) > 0)
         {
-          
+          $filename = sprintf('%s/%s', $public_path, $this->getCombinedName($type, $asset_names));
           $final[] = array(
-            sprintf('%s/%s', $public_path, $this->getCombinedName($type, $asset_names)) => array(
+            $filename => array(
               'media' => $media, // for now package works only for screen media
             )
           );
-        
-          $this->assets_loaded = array_merge($this->assets_loaded, $asset_names);
+
+          $this->addDebugInformation(sprintf('{stylesheets} media `%s` : %s => %s', $media, $filename, var_export($asset_names, 1)));
         }
       }
     }
@@ -205,15 +231,16 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     {
       if(count($combined_media) > 0)
       {
+        $filename = sprintf('%s/%s', $public_path, $this->getCombinedName($type, $combined_media));
         $final[] = array(
-          sprintf('%s/%s', $public_path, $this->getCombinedName($type, $combined_media)) => array(
+          $filename => array(
             'position' => '',
           )
         );
+        
+        $this->addDebugInformation(sprintf('{javascript} %s => %s', $filename, var_export($combined_media, 1)));
       }
     }
-    // keep a track of combined files for this view
-    $this->assets_loaded = array_merge($this->assets_loaded, $packages_files);
     
     return $final;
   }
