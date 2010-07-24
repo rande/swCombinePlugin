@@ -102,9 +102,10 @@ class swCombineStylesheet extends swCombineBase
       return $matches[0];
     }
     
-    // fix image path 
-    $web_dir = sfConfig::get('sf_web_dir');
-        
+    $file       = false;
+    $web_dir    = sfConfig::get('sf_web_dir');
+    $plugin_dir = sfConfig::get('sf_plugins_dir');
+    
     if($matches[2]{0} == '/')
     {
       $file = $matches[2];
@@ -113,7 +114,21 @@ class swCombineStylesheet extends swCombineBase
     {
       $file = $this->paths[$this->path_pos].'/'.$matches[2];
       $file = realpath($file);
-      $file = str_replace($web_dir, '', $file);
+      
+      // remove path if file are in the web directory
+      if(strpos($web_dir, $file))
+      {
+        $file = str_replace($web_dir, '', $file); 
+      }
+      else if(strpos($plugin_dir, $file))
+      {
+        $file = str_replace($plugin_dir, '', $file); 
+        $file = preg_replace('|(/[^/]+)/web|', '\1', $file, -1);
+      }
+      else
+      {
+        $file = false;
+      }
     }
     
     if($file)
