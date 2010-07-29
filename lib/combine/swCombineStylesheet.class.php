@@ -116,11 +116,11 @@ class swCombineStylesheet extends swCombineBase
       $file = realpath($file);
       
       // remove path if file are in the web directory
-      if(strpos($web_dir, $file))
+      if(strpos($file, $web_dir))
       {
         $file = str_replace($web_dir, '', $file); 
       }
-      else if(strpos($plugin_dir, $file))
+      else if(strpos($file, $plugin_dir))
       {
         $file = str_replace($plugin_dir, '', $file); 
         $file = preg_replace('|(/[^/]+)/web|', '\1', $file, -1);
