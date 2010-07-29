@@ -22,7 +22,8 @@ The plugin can also generate packages from a list of files. This feature allows 
     - swPassDriver : do nothing, use this if you want to combine your files with no optimizations
   
   - Javascript 
-    - swDriverGoogleClosureCompilerApi : use google closure algorithm
+    - swDriverGoogleClosureCompilerApi : use google closure algorithm (remote)
+    - swDriverGoogleClosureCompilerJar : use google closure algorithm (local, require java)
     - swDriverJSMin : use JSMin algorithm
     - swDriverJSMinPlus : user JSMin+ algorithm
     
@@ -69,8 +70,8 @@ The plugin can also generate packages from a list of files. This feature allows 
           param:
            configuration:
              javascript:
-               public_path:  /sw-combine
-               private_path: %SF_WEB_DIR%/sw-combine
+               public_path:  /sw-combine/%SF_APP%
+               private_path: %SF_WEB_DIR%/sw-combine/%SF_APP%
                combine:  swCombineJavascript
                driver:   swDriverJSMinPlus
                filename: %s.js                         # %s will by replace by the combined name
@@ -97,8 +98,8 @@ The plugin can also generate packages from a list of files. This feature allows 
                      - /js/main.js
 
              stylesheet:
-               public_path:  /sw-combine
-               private_path: %SF_WEB_DIR%/sw-combine
+               public_path:  /sw-combine/%SF_APP%
+               private_path: %SF_WEB_DIR%/sw-combine/%SF_APP%
                combine:  swCombineStylesheet
                driver:   swDriverCssmin
                filename: %s.css                        # %s will by replace by the combined name
