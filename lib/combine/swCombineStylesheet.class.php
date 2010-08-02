@@ -105,22 +105,29 @@ class swCombineStylesheet extends swCombineBase
     $file       = false;
     $web_dir    = sfConfig::get('sf_web_dir');
     $plugin_dir = sfConfig::get('sf_plugins_dir');
-    
+
+    // absolute path
     if($matches[2]{0} == '/')
     {
       $file = $matches[2];
     }
+    // external file
+    else if(substr($matches[2], 0, 7) == 'http://' || substr($matches[2], 0, 8) == 'https://')
+    {
+      $file = $matches[2];
+    }
+    // local file, fix path
     else
     {
       $file = $this->paths[$this->path_pos].'/'.$matches[2];
       $file = realpath($file);
       
       // remove path if file are in the web directory
-      if(strpos($file, $web_dir))
+      if(strpos($file, $web_dir) === 0)
       {
         $file = str_replace($web_dir, '', $file); 
       }
-      else if(strpos($file, $plugin_dir))
+      else if(strpos($file, $plugin_dir) === 0)
       {
         $file = str_replace($plugin_dir, '', $file); 
         $file = preg_replace('|(/[^/]+)/web|', '\1', $file, -1);
