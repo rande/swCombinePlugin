@@ -28,9 +28,7 @@ function sw_get_javascripts()
      continue;
     }
      
-    // append version if version is set
-    // or if the url does not contains a `?`
-    $file = $version && strpos($file, '?') === false ? $file.'?v='.$version : $file;
+    $file = $version ? $file.'?v='.$version : $file;
     
     $html .= javascript_include_tag($file, $options);
   }
@@ -58,9 +56,7 @@ function sw_get_stylesheets()
      continue;
     }
     
-    // append version if version is set
-    // or if the url does not contains a `?`
-    $file = $version && strpos($file, '?') === false ? $file.'?v='.$version : $file;
+    $file = $version ? $file.'?v='.$version : $file;
     
     $html .= stylesheet_tag($file, $options);
   }
@@ -83,11 +79,6 @@ function sw_combine_debug()
   if(ProjectConfiguration::getActive()->isDebug())
   {
     $response = sfContext::getInstance()->getResponse();
-    echo "<!-- DEBUG MODE - \nCombined information : \n";
-    foreach($response->getCombinedAssets() as $information)
-    {
-      echo $information."\n";
-    } 
-    echo "\n-->\n";
+    echo "<!-- DEBUG MODE - \nCombined files : \n".var_export($response->getCombinedAssets(), 1)."\n -->\n";
   }
 }

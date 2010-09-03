@@ -102,40 +102,36 @@ class swCombineStylesheet extends swCombineBase
       return $matches[0];
     }
     
-    $file       = false;
-    $web_dir    = sfConfig::get('sf_web_dir');
-    $plugin_dir = sfConfig::get('sf_plugins_dir');
-
-    // absolute path
+    // fix image path 
     if($matches[2]{0} == '/')
     {
       $file = $matches[2];
     }
-    // external file
-    else if(substr($matches[2], 0, 7) == 'http://' || substr($matches[2], 0, 8) == 'https://')
-    {
-      $file = $matches[2];
-    }
-    // local file, fix path
     else
     {
+      $config_handler = sfYaml::load(sfConfig::get('sf_app_config_dir') . '/config_handlers.yml');
+      $configuration = @$config_handler['modules/*/config/view.yml']['param']['configuration'];
+
+      $css_dir = sfConfig::get('sf_web_dir') . "/css";
+      $css_private_path = @$configuration['javascript']['private_path'];
+      $path_parts = preg_split('/\%/', $css_private_path);
+      foreach($path_parts as $part){
+          $configVar = sfConfig::get(strtolower($part));
+          if(!empty($configVar))
+            $css_path .= $configVar;
+          else
+            $css_path .= $part;
+      }
+
+      if(is_dir($css_path)){
+          $css_dir = $css_path;
+      }
+
       $file = $this->paths[$this->path_pos].'/'.$matches[2];
       $file = realpath($file);
-      
-      // remove path if file are in the web directory
-      if(strpos($file, $web_dir) === 0)
-      {
-        $file = str_replace($web_dir, '', $file); 
-      }
-      else if(strpos($file, $plugin_dir) === 0)
-      {
-        $file = str_replace($plugin_dir, '', $file); 
-        $file = preg_replace('|(/[^/]+)/web|', '\1', $file, -1);
-      }
-      else
-      {
-        $file = false;
-      }
+
+      $file = $this->getRelativePath($file, $css_dir);
+      //$file = str_replace($web_dir, '', $file);
     }
     
     if($file)
@@ -166,5 +162,54 @@ class swCombineStylesheet extends swCombineBase
     }
     
     throw new sfException('Unable to import statement file : '.$file);
+  }
+
+
+  /**
+   * Returns a relative path 
+   */
+  protected function getRelativePath( $path, $compareTo ) {
+    // clean arguments by removing trailing and prefixing slashes
+    if ( substr( $path, -1 ) == '/' ) {
+      $path = substr( $path, 0, -1 );
+    }
+    if ( substr( $path, 0, 1 ) == '/' ) {
+      $path = substr( $path, 1 );
+    }
+
+    if ( substr( $compareTo, -1 ) == '/' ) {
+      $compareTo = substr( $compareTo, 0, -1 );
+    }
+    if ( substr( $compareTo, 0, 1 ) == '/' ) {
+      $compareTo = substr( $compareTo, 1 );
+    }
+
+    // simple case: $compareTo is in $path
+    if ( strpos( $path, $compareTo ) === 0 ) {
+      $offset = strlen( $compareTo ) + 1;
+      return substr( $path, $offset );
+    }
+
+    $relative  = array(  );
+    $pathParts = explode( '/', $path );
+    $compareToParts = explode( '/', $compareTo );
+
+    foreach( $compareToParts as $index => $part ) {
+      if ( isset( $pathParts[$index] ) && $pathParts[$index] == $part ) {
+        continue;
+      }
+
+      $relative[] = '..';
+    }
+
+    foreach( $pathParts as $index => $part ) {
+      if ( isset( $compareToParts[$index] ) && $compareToParts[$index] == $part ) {
+        continue;
+      }
+
+      $relative[] = $part;
+    }
+
+    return implode( '/', $relative );
   }
 }

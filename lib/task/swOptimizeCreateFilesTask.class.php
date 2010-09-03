@@ -43,11 +43,11 @@ class swOptimizeCreateFilesTask extends sfBaseTask
 
     // the only way to get the configurated handler
     $config_cache = new swCombineConfigCache($this->configuration);
+
     $view_handler = $config_cache->getHandler('modules/*/config/view.yml');
     
     if(!$view_handler instanceof swCombineViewConfigHandler)
     {
-      
       throw new sfException('The view config handler must be a swCombineViewConfigHandler instance');
     }
     
@@ -67,22 +67,13 @@ class swOptimizeCreateFilesTask extends sfBaseTask
    */
   public function removeFiles($confirmation)
   {
-    $files = array();
-    foreach($this->view_parameters->get('configuration') as $type => $params)
-    {
-      if(!in_array($type, array('javascript', 'stylesheet')))
-      {
-        continue;
-      }
-      
-      if(!isset($params['private_path']))
-      {
-        continue;
-      }
-      
-      $files = array_merge($files, sfFinder::type('file')->maxdepth(0)->in($params['private_path']));
-      
-    }
+    $configuration = $this->view_parameters->get('configuration');
+    $js_private_path = @$configuration['javascript']['private_path'];
+    $css_private_path = @$configuration['javascript']['private_path'];
+
+    $files = sfFinder::type('file')
+      ->maxdepth(0)
+      ->in(array($js_private_path, $css_private_path));
     
     if(count($files) > 0 && ($confirmation || $this->askConfirmation(array_merge($files, array('--','Are you sure you want to delete these files? (y/N)')), null, false)))
     {
@@ -144,10 +135,8 @@ class swOptimizeCreateFilesTask extends sfBaseTask
       $modules[] = str_replace(sfConfig::get('sf_app_module_dir').'/', '', $module);
     }
 
-
     foreach($modules as $module)
     {
-      
       $this->logSection('combine', 'module : '.$module);
       
       $configPath = sprintf('modules/%s/config/view.yml', $module);
@@ -187,106 +176,56 @@ class swOptimizeCreateFilesTask extends sfBaseTask
   {
     
     $configuration = $this->view_parameters->get('configuration');
-    $combine_class =  $configuration[$type]['combine'];
+    $configuration = $configuration[$type];
+    $combine_class =  $configuration['combine'];
 
     if(!class_exists($combine_class))
     {
-      
       throw new sfException(sprintf('The combine class %s does not exist', $combine_class));
     }
     
+    $combine = new $combine_class($this->dispatcher, $this->formatter);
     $combined = array();
-    $combine  = null; 
-    $combines = array(); 
-    
-    if(!is_array($assets) || count($assets) == 0)
-    {
-      
-      return;
-    }
-    
     foreach($assets as $asset)
     {
+      $assetFile = $asset[1];
+      if($type == 'javascript'){
+          $assetFile = "/js/$assetFile";
+      }else{
+          $assetFile = "/css/$assetFile";
+      }
 
-      if($type == 'javascript' && !$combine)
-      {
-        $combine = new $combine_class($this->dispatcher, $this->formatter);
-      }
-      else
-      {
-        if(!array_key_exists('media', $asset[3]))
-        {
-          $asset[3] = array('media' => 'screen');
-        }
-        
-        $media = $asset[3]['media'];
-        
-        if(!array_key_exists($media, $combines))
-        {
-          $combines[$media] = new $combine_class($this->dispatcher, $this->formatter);
-        }
-      }
       
-      if($use_ignore && $this->view_handler->excludeFile($type, $asset[1]))
+      if($use_ignore && $this->view_handler->excludeFile($type, $assetFile))
       {
-        $this->logSection('combine', '   - exclude : '.$asset[1]);
+        // $this->logSection('combine', '   - exclude : '.$asset[1]);
         
         continue;
       } 
       
-      if(!$this->view_handler->isCombinable($type, $asset[1]))
+      if(!$this->view_handler->isCombinable($type, $assetFile))
       {
-        $this->logSection('combine', '   - not combinable : '.$asset[1]);
-                
         continue;
       }
       
-      $this->logSection('combine', '   + add : '.$asset[1]);
+      $this->logSection('combine', '   + add : '.$assetFile);
       
-      if($type == 'stylesheet')
-      {
-        $combines[$media]->addFile($asset[1]);
-      }
-      else
-      {
-        $combine->addFile($asset[1]);
-      }
+      $combined[] = $asset[1];
+      $combine->addFile(sprintf('%s/%s', sfConfig::get('sf_web_dir'), $assetFile));
     }
 
-    if($type == 'stylesheet')
-    {
-      foreach($combines as $name => $combine)
-      {
-        $this->combine($type, $combine, $force_name_to);
-      }
-    }
-    else if ($type == 'javascript' && $combine)
-    {
-      $this->combine($type, $combine, $force_name_to);
-    }
-  }
-  
-  public function combine($type, $combine, $force_name_to = false)
-  {
     if(count($combine->getFiles()) == 0)
     {
       $this->logSection('combine', '   ~ no files to add : '.$type);
 
       return;
     }
-
-    $configuration  = $this->view_parameters->get('configuration');
-    $private_path    = isset($configuration[$type]['private_path']) ? $configuration[$type]['private_path'] : false;
     
-    if(!$private_path)
-    {
-      throw new sfException(sprintf('Please set a `private_path` value for type `%s`', $type));
-    }
-
     $path = sprintf('%s/%s', 
-      $private_path, 
-      $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combine->getFiles())
+      $configuration['private_path'],
+      $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combined)
     );
+    
     
     if(is_file($path))
     {
@@ -310,13 +249,14 @@ class swOptimizeCreateFilesTask extends sfBaseTask
     $results = $driver->getResults();
     
 
-    $this->logSection('file+', sprintf(' > %s', $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combine->getFiles())));
+    $this->logSection('file+', sprintf(' > %s', $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combined)));
     
     $this->logSection('optimize', sprintf(' > from %.2fKB to %.2fKB, ratio -%s%%', 
       $results['originalSize'] / 1024, 
       $results['optimizedSize'] / 1024, 
       100 - $results['ratio']
     ));
+    
   }
   
   /**
