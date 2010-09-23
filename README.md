@@ -4,7 +4,7 @@ This plugin combines javascript and stylesheet files into optimized files.
 
 ## How it works ?
 
-The plugin read all view.yml files and generates the correct combined files :
+The plugin read all `view.yml` files and generates the correct combined files :
 
  - stylesheets
  - javascript
@@ -19,21 +19,23 @@ The plugin can also generate packages from a list of files. This feature allows 
 ## Available optimizers
 
   - Global
-    - swPassDriver : do nothing, use this if you want to combine your files with no optimizations
+    - `swPassDriver` : do nothing, use this if you want to combine your files with no optimizations
   
   - Javascript 
-    - swDriverGoogleClosureCompilerApi : use google closure algorithm (remote)
-    - swDriverGoogleClosureCompilerJar : use google closure algorithm (local, require java)
-    - swDriverJSMin : use JSMin algorithm
-    - swDriverJSMinPlus : user JSMin+ algorithm
+    - `swDriverGoogleClosureCompilerApi` : google closure algorithm (remote)
+    - `swDriverGoogleClosureCompilerJar` : google closure algorithm (local, require java)
+    - `swDriverJSMin` : JSMin algorithm
+    - `swDriverJSMinPlus` : JSMin+ algorithm
+    - `swDriverYuiJs` : YUI compressor (local, requires java)
     
   - Stylesheet
-    - swDriverCssmin : use Css min algorithm
-    - swDriverMinifyCssCompressor : use Minify Css Compressor algorithm
+    - `swDriverCssmin` : Css min algorithm
+    - `swDriverMinifyCssCompressor` : Minify Css Compressor algorithm
+    - `swDriverYuiCss` : YUI compressor (local, requires java)
 
 ## Install
 
- * edit ProjectConfiguration.class.php by adding the requirement and enable the plugin
+ * edit `ProjectConfiguration.class.php` by adding the requirement and enable the plugin
  
         [php] 
         require_once(dirname(__FILE__).'/../plugins/swCombinePlugin/lib/config/swCombineViewConfigHandler.class.php');
@@ -50,7 +52,7 @@ The plugin can also generate packages from a list of files. This feature allows 
            }
         }
 
- * edit your app.yml file and add an optional version value
+ * edit your `app.yml` and add an optional version value
  
         [yaml]
         swToolbox:
@@ -60,9 +62,8 @@ The plugin can also generate packages from a list of files. This feature allows 
             #   if the version is never updated, media will be never reloaded ...
             version: 3
   
- * add a config_handlers.yml inside APP/config
+ * add a `config_handlers.yml` inside `APP/config`
  
-        [yaml]
         modules/*/config/view.yml:
           # put sfViewConfigHandler to restore the default symfony config handler
           # class: sfViewConfigHandler
@@ -136,9 +137,8 @@ The plugin can also generate packages from a list of files. This feature allows 
 
 ## Packages
 
-  You can include packages into the view.yml, just add these lines into the view.yml file
+  You can include packages into the `view.yml`, just add these lines into `view.yml`:
 
-        [yml]
         all:
           sw_combine:
             include_packages:
@@ -156,7 +156,7 @@ The plugin can also generate packages from a list of files. This feature allows 
 
 This plugin has a hidden gem : asset versioning. When css files are combined, a version number is added  to all externals references. This feature must be use with helper functions `sw_include_stylesheets()` and `sw_include_javascripts()`, this two helpers add the version number on each declared assets.
 
-The asset version format is : ASSET_FILE?_sw=ASSET_VERSION
+The asset version format is : `ASSET_FILE?_sw=ASSET_VERSION`
 
 
 ### What does it mean ?
@@ -169,9 +169,8 @@ Doing so, the user agent will not do any extras requests to the webserver.
 
 ### Defining the asset version
 
- * edit your app.yml file by adding these lines
+ * edit your `app.yml` file by adding these lines
  
-        [yml]
         swToolbox:
           swCombine:
             version: 42
@@ -194,13 +193,13 @@ Doing so, the user agent will not do any extras requests to the webserver.
 
 ### css @import not loaded 
 
-   the import syntax must be : @import url('yourfile.css') or @import url("yourfile.css").
+   the import syntax must be : `@import url('yourfile.css')` or `@import url("yourfile.css")`.
    
-   this is not valid : @import url(yourfile.css)
+   this is not valid : `@import url(yourfile.css)`
    
-### Class 'swCombineViewConfigHandler' not found
+### Class swCombineViewConfigHandler not found
 
-   make sure the swCombineViewConfigHandler class is included in the ProjectConfiguration.class.php file
+   make sure the `swCombineViewConfigHandler` class is included in the ProjectConfiguration.class.php file
    
    
         require_once(dirname(__FILE__).'/../plugins/swCombinePlugin/lib/config/swCombineViewConfigHandler.class.php');
@@ -210,7 +209,7 @@ Doing so, the user agent will not do any extras requests to the webserver.
         
 ### unable to read the asset : /home/[...]/yourfile.css 
 
-   All your css and js files must be relative, like /js/asds.js and /css/toto.css, the *bad* magic from symfony does not work
+   All your css and js files must be relative, like `/js/asds.js` and `/css/toto.css`, the *bad* magic from symfony does not work
    
 
 ### my background pictures get stripped out
