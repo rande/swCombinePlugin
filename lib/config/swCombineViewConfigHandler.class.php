@@ -32,7 +32,11 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
    */
   protected function addHtmlAsset($viewName = '')
   {
-    
+		// Disable for dev environment
+		if (sfConfig::get('sf_debug') || sfConfig::get('sf_test')) {
+			return parent::addHtmlAsset($viewName);
+		}
+
     // Merge the current view's stylesheets with the app's default stylesheets
     $stylesheets = $this->mergeConfigValue('stylesheets', $viewName);
     
