@@ -240,6 +240,14 @@ class swOptimizeCreateFilesTask extends sfBaseTask
                 
         continue;
       }
+
+      $file    = sprintf('%s/%s', sfConfig::get('sf_web_dir'), $asset[1]);
+      if(!trim(file_get_contents($file)))
+      {
+        $this->logSection('combine', '   - empty : '.$asset[1]);
+
+        continue;
+      }
       
       $this->logSection('combine', '   + add : '.$asset[1]);
       
