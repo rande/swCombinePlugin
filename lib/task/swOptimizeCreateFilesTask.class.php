@@ -19,27 +19,31 @@ class swOptimizeCreateFilesTask extends sfBaseTask
   
   protected
     $view_handler,
-    $view_parameters;
+    $view_parameters,
+    $mhtml_server = false;
     
   protected function configure()
-   {
-     $this->namespace        = 'sw';
-     $this->name             = 'combine';
-     $this->briefDescription = 'Combine file';
+  {
+    $this->namespace        = 'sw';
+    $this->name             = 'combine';
+    $this->briefDescription = 'Combine file';
 
-     $this->addArguments(array(
-       new sfCommandArgument('application', sfCommandArgument::REQUIRED, 'The application name'),
-     ));
+    $this->addArguments(array(
+      new sfCommandArgument('application', sfCommandArgument::REQUIRED, 'The application name'),
+    ));
 
-     $this->addOptions(array(
-       new sfCommandOption('env', null, sfCommandOption::PARAMETER_REQUIRED, 'The environment', 'cli'),
-       new sfCommandOption('no-confirmation', null, sfCommandOption::PARAMETER_NONE, 'Whether to force deleting the file')
-     ));
+    $this->addOptions(array(
+      new sfCommandOption('mhtml-server', null, sfCommandOption::PARAMETER_REQUIRED, 'the server name use as the mhtml reference (use this to enable the data-uri option)', false),
+      new sfCommandOption('env', null, sfCommandOption::PARAMETER_REQUIRED, 'The environment', 'cli'),
+      new sfCommandOption('no-confirmation', null, sfCommandOption::PARAMETER_NONE, 'Whether to force deleting the file')
+    ));
 
-   }
+  }
   
   public function execute($arguments = array(), $options = array())
   {
+
+    $this->mhtml_server = $options['mhtml-server'];
 
     // the only way to get the configurated handler
     $config_cache = new swCombineConfigCache($this->configuration);
@@ -59,6 +63,9 @@ class swOptimizeCreateFilesTask extends sfBaseTask
     $this->combinePackagesFiles('stylesheet');
     $this->combinePackagesFiles('javascript');
 
+    // create the global one
+    $this->createMhtml($this->data_uri, 'mhtml');
+    
     $this->log('done !');
   }
   
@@ -276,8 +283,8 @@ class swOptimizeCreateFilesTask extends sfBaseTask
     }
 
     $configuration  = $this->view_parameters->get('configuration');
-    $private_path    = isset($configuration[$type]['private_path']) ? $configuration[$type]['private_path'] : false;
-    
+    $private_path   = isset($configuration[$type]['private_path']) ? $configuration[$type]['private_path'] : false;
+
     if(!$private_path)
     {
       throw new sfException(sprintf('Please set a `private_path` value for type `%s`', $type));
@@ -305,10 +312,14 @@ class swOptimizeCreateFilesTask extends sfBaseTask
 
     // optimize file with the provided driver
     $driver = $this->getDriver($type);
-    
+
+    // not very nice hack ... need to build a driver aggregator ...
+    if($type == 'stylesheet') {
+      $this->addDataUri($path, $configuration[$type]);
+    }
+
     $driver->processFile($path, true);
     $results = $driver->getResults();
-    
 
     $this->logSection('file+', sprintf(' > %s', $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combine->getFiles())));
     
@@ -317,6 +328,94 @@ class swOptimizeCreateFilesTask extends sfBaseTask
       $results['optimizedSize'] / 1024, 
       100 - $results['ratio']
     ));
+  }
+
+  public function createMhtml($data_url, $filename) {
+
+    if(count($data_url) == 0) {
+      return;
+    }
+
+    $configuration = $this->view_parameters->get('configuration');
+    $configuration = $configuration['stylesheet'];
+
+    // store content for IE browser
+    $contents = "/*\nContent-Type: multipart/related; boundary=\"_SW_COMBINE_SEPARATOR_\"\n\n";
+
+    foreach($data_url as $location => $base64) {
+      $contents .= sprintf("--_SW_COMBINE_SEPARATOR_\nContent-Location:%s\nContent-Transfer-Encoding:base64\n\n%s\n",
+        $location,
+        $base64
+      );
+    }
+
+    $contents .= "\n*/";
+
+    $this->saveContents(sprintf("%s/%s.css.txt", $configuration['private_path'], $filename), $contents);
+    
+  }
+
+  public function addDataUri($path, $configuration) {
+
+    if(!$this->mhtml_server) {
+      $this->logSection('data-uri', 'not enabled');
+
+      return;
+    }
+
+    $contents = file_get_contents($path);
+
+    // add data-uri element
+    $contents = preg_replace_callback('/background:([0-9a-zA-Z ]*)url\((.*)\)(.*);/smU', array($this, 'addDataUriCallback'), $contents);
+
+    // add mhtml information
+    $url = sprintf('%s%s/mhtml.css.txt', $this->mhtml_server, $configuration['public_path']);
+    $contents = str_replace('__FILE__', $url, $contents);
+    
+    // store content for DATA-URI friendly browser
+    $this->saveContents($path, $contents);
+  }
+
+  protected $data_uri = array();
+
+  public function storeDataUriContent($location, $content) {
+
+    $this->data_uri[$location] = $content;
+  }
+
+  public function addDataUriCallback($matches)
+  {
+
+    list($full, $prefix, $image, $suffix) = $matches;
+
+    $image = substr($image, 0, strpos($image, '?'));
+
+    $mime_types = array(
+      'png' => 'image/png',
+      'jpg' => 'image/jpg',
+      'jpeg' => 'image/jpeg',
+      'gif' => 'image/gif',
+    );
+    
+    $location = Doctrine_Inflector::urlize($image);
+
+    $path = sfConfig::get('sf_web_dir').$image;
+
+    $info = pathinfo($path);
+
+    $mime_type = $mime_types[strtolower($info['extension'])];
+
+    $contents = base64_encode(file_get_contents($path));
+
+    $this->storeDataUriContent($location, $contents);
+    
+    return sprintf(
+      'background:%surl("data:%s;base64,%s")%s;'.
+      '*background:%surl(mhtml:__FILE__!%s)%s;',
+      $prefix, $mime_type, $contents, $suffix,
+      $prefix, $location, $suffix
+    );
+    
   }
   
   /**
