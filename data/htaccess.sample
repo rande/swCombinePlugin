@@ -1,5 +1,6 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
+  RewriteBase /
 
   # Rules to correctly serve gzip compressed CSS and JS files.
   # Requires both mod_rewrite and mod_headers to be enabled.
@@ -20,9 +21,29 @@
 
     <FilesMatch "(\.js\.gz|\.css\.gz)$">
       # Serve correct encoding type.
-      Header append Content-Encoding gzip
+      Header set Content-Encoding gzip
       # Force proxies to cache gzipped & non-gzipped css/js files separately.
       Header append Vary Accept-Encoding
     </FilesMatch>
   </IfModule>
+
+  # we skip all files with .something
+  RewriteCond %{REQUEST_URI} \.(css|js|png|gif|jpg)$
+  RewriteRule .* - [L] 
+
+  # remove trailing slash
+  RewriteCond %{REQUEST_FILENAME} !-d 
+  RewriteCond %{REQUEST_URI} ^(.*)/$
+  RewriteRule ^(.*)/$ $1 [R=301,L]
+
+  # we check if the .html version is here (caching)
+  RewriteRule ^$ index.html [QSA]
+  RewriteRule ^([^.]+)$ $1.html [QSA]
+  RewriteCond %{REQUEST_FILENAME} !-f 
+
+  # no, so we redirect to our front web controller
+  RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
+
+# big crash from our front web controller
+ErrorDocument 500 "<h2>Application error</h2>symfony application failed to start properly"
