@@ -185,7 +185,7 @@ Doing so, the user agent will not do any extras requests to the webserver.
  * regenerate the combined css and js files with 
 
          ./symfony sw:combine frontend
-         ./symfony sw:combi"e backend
+         ./symfony sw:combine backend
 
 
 ## Enabling Gzip compression
@@ -194,13 +194,13 @@ If your server doesn't have mod_deflate enabled, you can tell the plugin to gzip
 
  * the filename format for combined assets in `APP/config/config_handlers.yml` must end with ".js" or ".css"
 
-    modules/*/config/view.yml:
-      param:
-        configuration:
-          javascript:
-            filename: %s.js
-          stylesheet:
-            filename: %s.css
+        modules/*/config/view.yml:
+          param:
+            configuration:
+              javascript:
+                filename: %s.js
+              stylesheet:
+                filename: %s.css
 
  * edit your `app.yml` file by adding these lines 
 
@@ -210,40 +210,40 @@ If your server doesn't have mod_deflate enabled, you can tell the plugin to gzip
 
  * regenerate the combined css and js files with 
 
-    ./symfony sw:combine frontend
-    ./symfony sw:combine backend
+        ./symfony sw:combine frontend
+        ./symfony sw:combine backend
 
  * add the following lines to your .htacces file (a sample file which combines this with the symfony default htacces is provided in the plugin under data/htaccess.sample)
 
-    <IfModule mod_rewrite.c>
-      RewriteEngine On
+        <IfModule mod_rewrite.c>
+          RewriteEngine On
 
-      # Rules to correctly serve gzip compressed CSS and JS files.
-      # Requires both mod_rewrite and mod_headers to be enabled.
-      <IfModule mod_headers.c>
-        # Serve gzip compressed CSS files if they exist and the client accepts gzip.
-        RewriteCond %{HTTP:Accept-encoding} gzip
-        RewriteCond %{REQUEST_FILENAME}\.gz -s
-        RewriteRule ^(.*)\.css $1\.css\.gz [QSA]
+          # Rules to correctly serve gzip compressed CSS and JS files.
+          # Requires both mod_rewrite and mod_headers to be enabled.
+          <IfModule mod_headers.c>
+            # Serve gzip compressed CSS files if they exist and the client accepts gzip.
+            RewriteCond %{HTTP:Accept-encoding} gzip
+            RewriteCond %{REQUEST_FILENAME}\.gz -s
+            RewriteRule ^(.*)\.css $1\.css\.gz [QSA]
 
-        # Serve gzip compressed JS files if they exist and the client accepts gzip.
-        RewriteCond %{HTTP:Accept-encoding} gzip
-        RewriteCond %{REQUEST_FILENAME}\.gz -s
-        RewriteRule ^(.*)\.js $1\.js\.gz [QSA]
+            # Serve gzip compressed JS files if they exist and the client accepts gzip.
+            RewriteCond %{HTTP:Accept-encoding} gzip
+            RewriteCond %{REQUEST_FILENAME}\.gz -s
+            RewriteRule ^(.*)\.js $1\.js\.gz [QSA]
 
-        # Serve correct content types, and prevent mod_deflate double gzip.
-        RewriteRule \.css\.gz$ - [T=text/css,E=no-gzip:1]
-        RewriteRule \.js\.gz$ - [T=text/javascript,E=no-gzip:1]
+            # Serve correct content types, and prevent mod_deflate double gzip.
+            RewriteRule \.css\.gz$ - [T=text/css,E=no-gzip:1]
+            RewriteRule \.js\.gz$ - [T=text/javascript,E=no-gzip:1]
 
-        <FilesMatch "(\.js\.gz|\.css\.gz)$">
-          # Serve correct encoding type.
-          Header set Content-Encoding gzip
-          # Force proxies to cache gzipped & non-gzipped css/js files separately.
-          Header append Vary Accept-Encoding
-        </FilesMatch>
-      </IfModule>
+            <FilesMatch "(\.js\.gz|\.css\.gz)$">
+              # Serve correct encoding type.
+              Header set Content-Encoding gzip
+              # Force proxies to cache gzipped & non-gzipped css/js files separately.
+              Header append Vary Accept-Encoding
+            </FilesMatch>
+          </IfModule>
 
-    </IfModule>
+        </IfModule>
 
          
          
