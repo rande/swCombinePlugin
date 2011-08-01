@@ -7,7 +7,7 @@
  * @subpackage  driver
  * @author      Yohan Giarelli <yohan@giarelli.org>
  */
-class swDriverCssmin extends swDriverBase
+class swDriverLessphp extends swDriverBase
 {
   public function doProcessFile($file, $replace = false)
   {
