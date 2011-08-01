@@ -32,6 +32,7 @@ The plugin can also generate packages from a list of files. This feature allows 
     - `swDriverCssmin` : Css min algorithm
     - `swDriverMinifyCssCompressor` : Minify Css Compressor algorithm
     - `swDriverYuiCss` : YUI compressor (local, requires java)
+    - `swDriverLessphp` : Lessphp Less css implementation
 
 ## Install
 
