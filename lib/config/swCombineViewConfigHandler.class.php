@@ -322,14 +322,9 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
     sort($assets);
     
     // compute the name
-    $name =  sprintf( $format, md5(serialize($assets)) );
+    $name =  md5(serialize($assets));
 
-    $params = sfConfig::get('app_swToolbox_swCombine', array('use_gzip' => false));
-    if($params['use_gzip'])
-    {
-      $name .= '.gz';
-    }
-    return $name;
+    return sprintf($format, $name);
   }
   
   public function getPackageName($type, $name)
@@ -343,12 +338,8 @@ class swCombineViewConfigHandler extends sfViewConfigHandler
       md5(sfInflector::underscore('package_'.$type.'_'.$name))
     );
 
-    $params = sfConfig::get('app_swToolbox_swCombine', array('use_gzip' => false));
-    if($params['use_gzip'])
-    {
-      $name .= '.gz';
-    }
-    return $name;
+    $name = md5(sfInflector::underscore('package_'.$type.'_'.$name));
+    return sprintf($format, $name);
   }
   
   /**

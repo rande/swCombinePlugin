@@ -294,12 +294,6 @@ class swOptimizeCreateFilesTask extends sfBaseTask
       $private_path, 
       $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combine->getFiles())
     );
-
-    $params = sfConfig::get('app_swToolbox_swCombine', array('use_gzip' => false));
-    if ($params['use_gzip'])
-    {
-      $path = str_replace('.gz','',$path);
-    }
     
     if(is_file($path))
     {
@@ -329,6 +323,7 @@ class swOptimizeCreateFilesTask extends sfBaseTask
 
     $this->logSection('file+', sprintf(' > %s', $force_name_to ? $force_name_to : $this->view_handler->getCombinedName($type, $combine->getFiles())));
 
+    $params = sfConfig::get('app_swToolbox_swCombine', array('use_gzip' => false));
     if($params['use_gzip'])
     {
       $this->saveContents($path.'.gz', gzencode(file_get_contents($path), 9));
